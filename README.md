@@ -3,14 +3,27 @@ Este repositório é tirado do repositório original [GoogleCloudPlataform/micro
 
 # O projeto
 Este repositório consta o estudo aplicado a um microserviço utilizando o argoCD. O projeto se divide em:
-[Introdução](#introdução)
-[Pré requisitos](#pré-requisitos)
-[Instalando os pré requisitos](#instalando-os-pre-requisitos)
-[Criando um fork](#criando-um-fork)
-[Instalando o ArgoCD no cluster](#instalando-o-argocd-no-cluster)
-[Acessando o ArgoCD](#acessando-o-argocd)
-[Criar o App no ArgoCD](#criar-o-app-no-argocd)
-[Acessar o frontend](#acessar-o-frontend)
+1. [Introdução](#introdução)
+1. [Pré requisitos](#pré-requisitos)
+1. [Instalando os pré requisitos](#instalando-os-pre-requisitos)
+    
+    3.1. [rancher desktop, kubectl e docker](#rancher-desktop-kubectl-e-docker)
+
+    3.2. [Git](#git)0
+
+    3.3. [ArgoCD](#argocd)
+
+1. [Criando um fork](#criando-um-fork)
+
+    4.1. [Criando o fork](#criando-o-fork)
+
+    4.2. [Criando um novo repositório](#criando-um-novo-repositório)
+1. [Instalando o ArgoCD no cluster](#instalando-o-argocd-no-cluster)
+1. [Acessando o ArgoCD](#acessando-o-argocd)
+1. [Criar o App no ArgoCD](#criar-o-app-no-argocd)
+
+    7.1. [Criando um PAT](#criando-um-pat)
+1. [Acessar o front-end](#acessar-o-front-end)
 
 # Introdução
 Este repositório tem como objetivo demonstrar a implementação de um microserviço utilizando o ArgoCD para gerenciamento de entrega contínua. O ArgoCD é uma ferramenta poderosa que permite a implementação de práticas GitOps em ambientes Kubernetes, facilitando a automação e o controle de versões das aplicações.
@@ -52,7 +65,7 @@ Este processo será realizado [neste passo](#instalando-o-argocd-no-cluster).
 ## Criando o fork
 Existem diversas formas de criar um fork de um repositório. Primeiramente, acesse o seu github, ou crie sua conta, e após isto acesse o [repositório original](https://github.com/GoogleCloudPlatform/microservices-demo).
 Clique no botão "Fork" localizado no canto superior direito da página do repositório. Isso criará uma cópia do repositório original na sua conta do GitHub.
-![alt text](image.png)
+![alt text](images/image.png)
 
 A mais simples porém que necessita de mais afinidade com o prompt de comando / terminal é usar os comandos:
 ```bash
@@ -82,7 +95,7 @@ Para instalar o ArgoCD no cluster Kubernetes, execute os seguintes comandos:
 
 ```bash
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argocd/stable/manifests/install.yaml
 ```
 Isso criará um namespace chamado `argocd` e aplicará os manifests necessários para instalar o ArgoCD no cluster.
 
@@ -95,12 +108,12 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 * Caso ocorra o erro `error: unable to forward port because pod is not running. Current status=Pending` siga estes passos:
 Abra o Rancher Desktop e clique em preferences:
-![alt text](image-1.png)
+![alt text](images/images/image-1.png)
 Selecione a opção "Container Engine" > "allowed Images".
 Caso esteja igual a a imagem abaixo, instale a versão 1.19.1 de acordo com o sistema operacional
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 adicione a imagem quay.io clicando em (+) e adicionando o nome de acordo com a figura abaixo:
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 e faça o login no quay.io (crie um usuário no red hat se necessario) usando o codigo
 ```bash
 docker login quay.io
@@ -113,8 +126,7 @@ Abra uma nova aba de prompt/terminal e digite o comando
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ```
-
-ou 
+no linux ou macOS, ou 
 ```powershell
 $base64String =kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
 ```
@@ -122,16 +134,103 @@ e após isto
 ```powershell
 [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($base64String))
 ```
-para obter a senha inicial do usuário `admin`. Use `admin` como nome de usuário e a senha obtida no comando acima para fazer login no ArgoCD.
+no windows para obter a senha inicial do usuário `admin`. Use `admin` como nome de usuário e a senha obtida no comando acima para fazer login no ArgoCD.
 
 Caso tudo tenha funcionado corretamente, a tela aparecerá desta maneira:
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
 # Criar o App no ArgoCD
 
 Para criar um novo aplicativo no ArgoCD, siga os seguintes passos:
 Clique em "settings" e após isto em "Repositories"
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 Clique em "Connect Repo"
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 Preencha os campos com as informações do seu repositório:
+- método de conexão: HTTP/HTTPS
+- type: Git
+- URL do repositório: <URL_DO_REPOSITORIO_GIT>
+- project: <nome_do_projeto>
+- username: <seu_usuario_github>
+- password: <[um PAT](#criando-um-pat)]>
+
+Após isto, clique em "Connect" para conectar o repositório ao ArgoCD.
+![alt text](images/image-11.png)
+Caso esteja tudo correto, aparecerá seu repositório de acordo com a imagem
+![alt text](images/image-12.png)
+
+Iremos criar agora a aplicação. Na lateral, clique em "Applications" e depois em "New Application".
+![alt text](images/image-13.png)
+Em seguida preencha os campos necessários:
+- Application name: <nome_da_aplicação>
+- Projeto: <nome_do projeto>
+- opções:
+    - PRUNE RESOURCES
+    - SELF HEAL
+    - SET DELETION FINALIZER
+    - AUTO-CREATE NAMESPACE
+![alt text](images/image-14.png)
+- Repositório: <nome_do_repositório>
+- Caminho: gitops-microservice/k8s
+- Cluster: in-cluster
+- Namespace: default
+![alt text](images/image-15.png)
+
+Ou selecione a opção e edite conforme os dados que necessite completar:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: online-boutique
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    name: in-cluster
+    namespace: online-boutique
+  source:
+    path: ./gitops-microservices/k8s
+    repoURL: <repositorio_git>
+    targetRevision: main
+  sources: []
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+```
+Caso esteja desincronizado, clique em "Sync" para sincronizar. Aguarde um momento até o status seja alterado:
+![alt text](images/image-16.png)
+
+## criando um PAT
+Caso não tenha um Personal Access Token (PAT) com escopo repo siga os seguintes passos:
+1. Acesse o GitHub e vá para as configurações da sua conta.
+![alt text](images/image-7.png)
+2. Clique em "Developer settings" no menu lateral ao final do menu.
+![alt text](images/image-8.png)
+3. Clique em "Personal access tokens" e depois em "Tokens (classic)".
+![alt text](images/image-9.png)
+4. Clique em "Generate new token (classic)".
+5. Preencha os campos necessários:
+   - Nome: <nome_do_token>
+   - Expiração: Escolha uma data de expiração adequada.
+   - Escopos: Selecione os escopos necessários, como `repo` para acesso ao repositório.
+   ![alt text](images/image-10.png)
+   clique em "Generate token" para criar o token.
+6. Copie o token gerado e cole no campo "password" do ArgoCD.
+
+
+# Acessar o front-end
+Para acessar o front-end do microserviço, use o commando para localizar o IP externo do load balancer da aplicação usando o comando no windows:
+```powershell
+rdctl shell
+```
+para entrar no shell do rancher desktop e após isto:
+```bash
+kubectl get service frontend-external | awk '{print $4}'
+```
+
+Caso esteja no linux somente o ultimo comando é necessario, pois o comando `awk`é nativo do linux
+ Visite o IP externo mostrado na saída do comando.
